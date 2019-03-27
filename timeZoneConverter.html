@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+<title>JST / UTC の変換</title>
+</head>
+<body >
+<h2>JST / UTC の変換</h2>
+<div style="font-size:10px">
+    <span>SELECT *  FROM log WHERE time >= "2019-03-01 05:00:00" AND time <= "2019-03-02 07:59:59";</span>
+</div>
+<textarea rows=8 cols=150 id="sql" style="overflow:scroll;font-family:'ＭＳ ゴシック',sans-serif;" wrap="off" placeholder="日付 or 日付を含むSQL文を記述（複数可）  日付フォーマット: yyyy-MM-dd HH:mm:ss">
+</textarea>
+<br></br>
+<input type="button" id="btn_converter_to_utc" value="JST は UTC へ変換" />
+<input type="button" id="btn_converter_to_jst" value="UTC は JST へ変換" />
+<input type="button" id="btn_reset" value="リセット" />
+<br></br>
+<textarea rows=8 cols=150 id="result" style="overflow:scroll;font-family:'ＭＳ ゴシック',sans-serif;" wrap="off">
+</textarea>
+ <script type="text/javascript">
+$(function() {
+    $('input[id^=btn_converter_to_]').click(function() {
+        let sqlVal = $('#sql').val();
+        if (!sqlVal) {
+            sqlVal = localeDateTimeStr(new Date());
+            $('#sql').val(sqlVal);
+        }
+        const results = sqlVal.match(/\d{4}\-\d{2}\-\d{2} \d{2}\:\d{2}\:\d{2}/g);
+        if (results) {
+            const btnId = this.id;
+            results.forEach(function(dateTimeStr) {
+                sqlVal = sqlVal.replace(dateTimeStr, timeZoneConv[btnId](dateTimeStr));
+            });
+        }
+        $('#result').val(sqlVal);
+    });
+
+    const timeZoneConv = {
+        btn_converter_to_utc: function (dateTimeStr) {
+            let date = new Date(dateTimeStr);
+            return dateFormat(
+                    date.getUTCFullYear(),
+                    date.getUTCMonth(),
+                    date.getUTCDate(),
+                    date.getUTCHours(),
+                    date.getUTCMinutes(),
+                    date.getUTCSeconds()
+            );
+        },
+        btn_converter_to_jst: function (dateTimeStr) {
+            let date = new Date(dateTimeStr);
+            date.setTime(date.getTime() + (1000*60*60*9));
+            return localeDateTimeStr(date);
+        }
+    };
+
+    $('#btn_reset').click(function() {
+        $('#sql').val('');
+        $('#result').val('');
+    });
+
+    function localeDateTimeStr(date) {
+        return dateFormat(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            date.getHours(),
+            date.getMinutes(),
+            date.getSeconds()
+        );
+    }
+
+    function dateFormat(year, month, date, hours, min, sec) {
+        const mm = ('0' + (month + 1)).slice(-2);
+        const dd = ('0' + date).slice(-2);
+        const hh = ('0' + hours).slice(-2);
+        const mi = ('0' + min).slice(-2);
+        const ss = ('0' + sec).slice(-2);
+        return year + '-' + mm + '-' + dd + ' ' + hh + ':' + mi + ':' + ss;
+    }
+});
+</script>
+</body>
+</html>
